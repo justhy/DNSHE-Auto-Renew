@@ -1,0 +1,41 @@
+name: DNSHE Domain Auto Renew
+
+on:
+  schedule:
+    # 表达式说明：分钟 小时 天 月 星期
+    # 对应北京时间 (UTC+8) 为每天 08:00
+    - cron: '0 0 * * *'
+  workflow_dispatch: # 依然保留手动触发按钮，方便测试
+
+jobs:
+  renew:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Run renew script
+        env:
+          # 以下变量需在仓库 Settings -> Secrets -> Actions 中配置 
+          API_KEY: ${{ secrets.API_KEY }}
+          API_SECRET: ${{ secrets.API_SECRET }}
+          TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
+          TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
+        run: python renew_domains.py
+
+      - name: Keepalive
+        run: |
+            git config user.name  "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            date -u > .keepalive
+            git add .keepalive
+            git commit -m "chore: keepalive $(date -u +%Y-%m-%d)"
+            git push
