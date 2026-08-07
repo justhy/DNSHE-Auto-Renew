@@ -12,12 +12,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v6
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: '3.13'
 
       - name: Install dependencies
         run: pip install requests
@@ -37,5 +37,5 @@ jobs:
             git config user.email "github-actions[bot]@users.noreply.github.com"
             date -u > .keepalive
             git add .keepalive
-            git commit -m "chore: keepalive $(date -u +%Y-%m-%d)"
+            git commit -m "keepalive $(date -u +%Y-%m-%d)"
             git push
