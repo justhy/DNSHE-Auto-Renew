@@ -82,8 +82,6 @@ def sendMsgPush(text: str) -> bool:
     }
     # 按服务端调用示例，请求体只需 text（Markdown 格式）；title/type 等字段可能被严格校验拒绝
     payload: dict = {"text": html_to_markdown(text)}
-    if MSG_PUSH_TO:
-        payload["to"] = MSG_PUSH_TO
 
     try:
         resp = requests.post(url, json=payload, headers=headers, timeout=30)
