@@ -8,11 +8,24 @@ API_KEY = os.environ.get('API_KEY')
 API_SECRET = os.environ.get('API_SECRET')
 TG_BOT_TOKEN = os.environ.get('TG_BOT_TOKEN')
 TG_CHAT_ID = os.environ.get('TG_CHAT_ID')
+MSG_PUSH_URL = os.environ.get("MSG_PUSH_URL", "")
+MSG_PUSH_TOKEN = os.environ.get("MSG_PUSH_TOKEN", "")
 
 BASE_URL = "https://api005.dnshe.com/index.php?m=domain_hub"
 
 # 续期阈值：到期时间小于该天数则执行续期
 RENEW_THRESHOLD_DAYS = 180
+
+# ========== HTML 标签去除（用于 MagicPush 纯文本） ==========
+def strip_html(text: str) -> str:
+    """去除 HTML 标签，将 <br> 转为换行，用于不支持 HTML 的推送渠道"""
+    # 将 <br> 标签转为换行
+    text = re.sub(r'<br\s*/?>', '\n', text, flags=re.IGNORECASE)
+    # 去除所有 HTML 标签
+    text = re.sub(r'<[^>]+>', '', text)
+    # 合并多余空行
+    text = re.sub(r'\n{3,}', '\n\n', text)
+    return text.strip()
 
 # TG推送
 def sendTgBot(content):
@@ -38,6 +51,40 @@ def sendTgBot(content):
                 print('tg推送失败')
     print('')
 
+# ========== Push 通知 ==========
+def sendMsgPush(text: str) -> bool:
+    if not MSG_PUSH_URL or not MSG_PUSH_TOKEN:
+        print("未配置 MagicPush 信息，跳过消息推送", file=sys.stderr)
+        return False
+
+    # 去除 HTML 标签，转为纯文本
+    #plain_text = strip_html(text)
+
+    url = MSG_PUSH_URL
+    headers = {
+        "Authorization": f"Bearer {MSG_PUSH_TOKEN}",
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+    }
+    payload = {
+        "title": "DigitalPlat 域名续期检测",
+        "text": text,
+        "type": "text",
+    }
+
+    try:
+        resp = requests.post(url, json=payload, headers=headers, timeout=30)
+        resp.raise_for_status()
+        print("MagicPush 通知发送成功", file=sys.stderr)
+        return True
+    except Exception as e:
+        print(f"MagicPush 发送失败: {e}", file=sys.stderr)
+        return False
+
+def sendMSG(text: str) -> None:
+    """同时发送到 Telegram（HTML）和 MsgPush（纯文本），互不干扰"""
+    sendTgBot(text)
+    sendMsgPush(text)
 
 def main():
     headers = {
@@ -52,7 +99,7 @@ def main():
         resp = requests.get(list_url, headers=headers)
         subdomains = resp.json().get('subdomains', [])
     except Exception as e:
-        sendTgBot(f"获取域名列表失败: {str(e)}")
+        sendMSG(f"获取域名列表失败: {str(e)}")
         return
 
     today = datetime.now()
@@ -131,7 +178,7 @@ def main():
 
     message = "\n".join(message_parts)
     print(message)
-    sendTgBot(message)
+    sendMSG(message)
 
 if __name__ == "__main__":
     main()
