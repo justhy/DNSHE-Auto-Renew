@@ -68,7 +68,7 @@ def sendTgBot(content):
     print('')
 
 # ========== 第三方消息推送（MsgPush） ==========
-def send_msgpush(text: str) -> bool:
+def sendMsgPush(text: str) -> bool:
     if not MSG_PUSH_URL or not MSG_PUSH_TOKEN:
         print("未配置 MSG_PUSH_URL / MSG_PUSH_TOKEN，跳过消息推送", file=sys.stderr)
         return False
