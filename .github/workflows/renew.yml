@@ -29,6 +29,8 @@ jobs:
           API_SECRET: ${{ secrets.API_SECRET }}
           TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
           TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
+          MSG_PUSH_URL: ${{ secrets.MSG_PUSH_URL }}
+          MSG_PUSH_TOKEN: ${{ secrets.MSG_PUSH_TOKEN }}
         run: python renew_domains.py
 
       - name: Keepalive
